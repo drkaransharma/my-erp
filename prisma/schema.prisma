@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+  VOIDED
+}
+
+enum BillStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+model Account {
+  id          String      @id @default(uuid())
+  code        String      @unique
+  name        String
+  type        AccountType
+  subtype     String?
+  description String?
+  parentId    String?
+  parent      Account?    @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children    Account[]   @relation("AccountHierarchy")
+  isActive    Boolean     @default(true)
+  balance     Decimal     @default(0) @db.Decimal(15, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  journalEntryLines JournalEntryLine[]
+
+  @@index([type])
+  @@index([code])
+}
+
+model JournalEntry {
+  id          String             @id @default(uuid())
+  entryNumber String             @unique
+  date        DateTime
+  description String
+  status      JournalEntryStatus @default(DRAFT)
+  reference   String?
+  totalDebit  Decimal            @default(0) @db.Decimal(15, 2)
+  totalCredit Decimal            @default(0) @db.Decimal(15, 2)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  lines JournalEntryLine[]
+}
+
+model JournalEntryLine {
+  id             String @id @default(uuid())
+  journalEntryId String
+  accountId      String
+  description    String?
+  debit          Decimal @default(0) @db.Decimal(15, 2)
+  credit         Decimal @default(0) @db.Decimal(15, 2)
+
+  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account      Account      @relation(fields: [accountId], references: [id])
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bills Bill[]
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices Invoice[]
+}
+
+model Bill {
+  id          String     @id @default(uuid())
+  billNumber  String     @unique
+  vendorId    String
+  date        DateTime
+  dueDate     DateTime
+  amount      Decimal    @db.Decimal(15, 2)
+  amountPaid  Decimal    @default(0) @db.Decimal(15, 2)
+  status      BillStatus @default(PENDING)
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status])
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  customerId    String
+  date          DateTime
+  dueDate       DateTime
+  amount        Decimal       @db.Decimal(15, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(15, 2)
+  status        InvoiceStatus @default(PENDING)
+  description   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+}
+
+// ==================== CRM MODULE ====================
+
+enum ContactStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  LINKEDIN
+  COLD_CALL
+  TRADE_SHOW
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model CrmCompany {
+  id        String   @id @default(uuid())
+  name      String
+  industry  String?
+  website   String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts CrmContact[]
+  leads    CrmLead[]
+  deals    CrmDeal[]
+}
+
+model CrmContact {
+  id              String        @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  title           String?
+  companyId       String?
+  status          ContactStatus @default(ACTIVE)
+  notes           String?
+  lastContactedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  company CrmCompany? @relation(fields: [companyId], references: [id])
+  leads   CrmLead[]
+  deals   CrmDeal[]
+
+  @@index([companyId])
+  @@index([status])
+}
+
+model CrmLead {
+  id          String     @id @default(uuid())
+  title       String
+  contactId   String?
+  companyId   String?
+  source      LeadSource @default(OTHER)
+  status      LeadStatus @default(NEW)
+  value       Decimal    @default(0) @db.Decimal(15, 2)
+  assignedTo  String?
+  probability Int        @default(0)
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  contact CrmContact? @relation(fields: [contactId], references: [id])
+  company CrmCompany? @relation(fields: [companyId], references: [id])
+
+  @@index([status])
+  @@index([source])
+  @@index([companyId])
+  @@index([contactId])
+}
+
+model CrmDeal {
+  id                String    @id @default(uuid())
+  title             String
+  companyId         String?
+  contactId         String?
+  value             Decimal   @default(0) @db.Decimal(15, 2)
+  stage             DealStage @default(PROSPECTING)
+  probability       Int       @default(10)
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  company CrmCompany? @relation(fields: [companyId], references: [id])
+  contact CrmContact? @relation(fields: [contactId], references: [id])
+
+  @@index([stage])
+  @@index([companyId])
+  @@index([contactId])
+}
+
+// ==================== ADMIN MODULE ====================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  headId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  head  User?  @relation("DepartmentHead", fields: [headId], references: [id])
+  users User[] @relation("DepartmentMembers")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions Json     @default("{}")
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id           String     @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String     @unique
+  password     String     @default("password123")
+  avatarUrl    String?
+  roleId       String?
+  departmentId String?
+  reportsToId  String?
+  title        String?
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  role          Role?        @relation(fields: [roleId], references: [id])
+  department    Department?  @relation("DepartmentMembers", fields: [departmentId], references: [id])
+  reportsTo     User?        @relation("UserHierarchy", fields: [reportsToId], references: [id])
+  directReports User[]       @relation("UserHierarchy")
+  headOf        Department[] @relation("DepartmentHead")
+
+  @@index([roleId])
+  @@index([departmentId])
+  @@index([reportsToId])
+  @@index([status])
+}
