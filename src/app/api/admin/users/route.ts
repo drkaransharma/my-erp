@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const users = await prisma.user.findMany({
-    orderBy: { lastName: "asc" },
-    include: { role: true, department: true, reportsTo: true, directReports: true },
-  });
-  return NextResponse.json(users);
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { lastName: "asc" },
+      include: { role: true, department: true, reportsTo: true, directReports: true },
+    });
+    return NextResponse.json(users);
+  } catch (err: any) {
+    console.error("GET /api/admin/users error:", err);
+    return NextResponse.json({ error: err.message || "Database error" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
