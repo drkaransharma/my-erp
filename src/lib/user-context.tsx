@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { AdminUser } from "@/types/admin";
+import type { AdminUser, ModuleName, PermissionsMap } from "@/types/admin";
 
 interface UserContextType {
   currentUser: AdminUser | null;
@@ -10,7 +10,17 @@ interface UserContextType {
   setCurrentUser: (user: AdminUser) => void;
   logout: () => void;
   loading: boolean;
+  hasPermission: (module: ModuleName, action?: "view" | "create" | "edit" | "delete") => boolean;
+  getPermissions: () => PermissionsMap | null;
 }
+
+const defaultPerms: PermissionsMap = {
+  finance: { view: false, create: false, edit: false, delete: false },
+  crm: { view: false, create: false, edit: false, delete: false },
+  hr: { view: false, create: false, edit: false, delete: false },
+  inventory: { view: false, create: false, edit: false, delete: false },
+  admin: { view: false, create: false, edit: false, delete: false },
+};
 
 const UserContext = createContext<UserContextType>({
   currentUser: null,
@@ -18,6 +28,8 @@ const UserContext = createContext<UserContextType>({
   setCurrentUser: () => {},
   logout: () => {},
   loading: true,
+  hasPermission: () => false,
+  getPermissions: () => null,
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
@@ -63,8 +75,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [router]);
 
+  const getPermissions = useCallback((): PermissionsMap | null => {
+    if (!currentUser?.role?.permissions) return null;
+    return { ...defaultPerms, ...(currentUser.role.permissions as PermissionsMap) };
+  }, [currentUser]);
+
+  const hasPermission = useCallback((module: ModuleName, action: "view" | "create" | "edit" | "delete" = "view"): boolean => {
+    const perms = getPermissions();
+    if (!perms) return false;
+    return perms[module]?.[action] ?? false;
+  }, [getPermissions]);
+
   return (
-    <UserContext.Provider value={{ currentUser, allUsers, setCurrentUser, logout, loading }}>
+    <UserContext.Provider value={{ currentUser, allUsers, setCurrentUser, logout, loading, hasPermission, getPermissions }}>
       {children}
     </UserContext.Provider>
   );

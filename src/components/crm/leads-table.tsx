@@ -27,7 +27,7 @@ const sourceLabels: Record<string, string> = {
 
 interface LeadsTableProps {
   leads: CrmLead[];
-  onEdit: (lead: CrmLead) => void;
+  onEdit?: (lead: CrmLead) => void;
 }
 
 export function LeadsTable({ leads, onEdit }: LeadsTableProps) {
@@ -88,7 +88,7 @@ export function LeadsTable({ leads, onEdit }: LeadsTableProps) {
                 <TableCell className="text-right font-mono">{formatCurrency(lead.value)}</TableCell>
                 <TableCell className="text-sm">{lead.assignedTo || "—"}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(lead)}><Pencil className="h-4 w-4" /></Button>
+                  {onEdit && <Button variant="ghost" size="icon" onClick={() => onEdit(lead)}><Pencil className="h-4 w-4" /></Button>}
                 </TableCell>
               </TableRow>
             ))}

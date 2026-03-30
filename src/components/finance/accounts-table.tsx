@@ -12,7 +12,7 @@ import type { Account } from "@/types/finance";
 
 interface AccountsTableProps {
   accounts: Account[];
-  onEdit: (account: Account) => void;
+  onEdit?: (account: Account) => void;
 }
 
 const typeColors: Record<string, string> = {
@@ -95,9 +95,11 @@ export function AccountsTable({ accounts, onEdit }: AccountsTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(account)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  {onEdit && (
+                    <Button variant="ghost" size="icon" onClick={() => onEdit(account)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

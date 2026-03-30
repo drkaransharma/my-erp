@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useUser } from "@/lib/user-context";
+import type { ModuleName } from "@/types/admin";
 import {
   LayoutDashboard,
   BookOpen,
@@ -41,6 +43,7 @@ interface NavGroup {
   items: NavItem[];
   disabled?: boolean;
   defaultOpen?: boolean;
+  module?: ModuleName; // if set, only shown when user has view permission
 }
 
 const navGroups: NavGroup[] = [
@@ -57,6 +60,7 @@ const navGroups: NavGroup[] = [
     title: "Finance",
     icon: CreditCard,
     defaultOpen: true,
+    module: "finance",
     items: [
       { title: "Chart of Accounts", href: "/finance/chart-of-accounts", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journal-entries", icon: FileText },
@@ -69,6 +73,7 @@ const navGroups: NavGroup[] = [
     title: "CRM",
     icon: Users,
     defaultOpen: true,
+    module: "crm",
     items: [
       { title: "Dashboard", href: "/crm/dashboard", icon: BarChart3 },
       { title: "Companies", href: "/crm/companies", icon: Building2 },
@@ -81,6 +86,7 @@ const navGroups: NavGroup[] = [
     title: "HR",
     icon: UserCircle,
     disabled: true,
+    module: "hr",
     items: [
       { title: "Employees", href: "#", icon: UserCircle, disabled: true, badge: "Soon" },
     ],
@@ -89,6 +95,7 @@ const navGroups: NavGroup[] = [
     title: "Inventory",
     icon: Package,
     disabled: true,
+    module: "inventory",
     items: [
       { title: "Products", href: "#", icon: Package, disabled: true, badge: "Soon" },
     ],
@@ -97,6 +104,7 @@ const navGroups: NavGroup[] = [
     title: "Admin",
     icon: Shield,
     defaultOpen: false,
+    module: "admin",
     items: [
       { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { title: "Users", href: "/admin/users", icon: Users },
@@ -109,7 +117,16 @@ const navGroups: NavGroup[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { hasPermission } = useUser();
   const [collapsed, setCollapsed] = useState(false);
+
+  const filteredGroups = useMemo(() => {
+    return navGroups.filter((group) => {
+      if (!group.module) return true; // Overview always visible
+      return hasPermission(group.module, "view");
+    });
+  }, [hasPermission]);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(navGroups.map((g) => [g.title, g.defaultOpen ?? false]))
   );
@@ -139,7 +156,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
-        {navGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.title} className="mb-1">
             <button
               onClick={() => toggleGroup(group.title)}

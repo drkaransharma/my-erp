@@ -28,7 +28,7 @@ const stageOrder = ["PROSPECTING", "QUALIFICATION", "PROPOSAL", "NEGOTIATION", "
 
 interface DealsTableProps {
   deals: CrmDeal[];
-  onEdit: (deal: CrmDeal) => void;
+  onEdit?: (deal: CrmDeal) => void;
 }
 
 export function DealsTable({ deals, onEdit }: DealsTableProps) {
@@ -76,7 +76,7 @@ export function DealsTable({ deals, onEdit }: DealsTableProps) {
               </div>
               <div className="space-y-2">
                 {group.deals.map((deal) => (
-                  <Card key={deal.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onEdit(deal)}>
+                  <Card key={deal.id} className={onEdit ? "cursor-pointer hover:shadow-md transition-shadow" : ""} onClick={() => onEdit?.(deal)}>
                     <CardContent className="p-3">
                       <p className="text-sm font-medium truncate">{deal.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{deal.company?.name}</p>
@@ -119,7 +119,7 @@ export function DealsTable({ deals, onEdit }: DealsTableProps) {
                   <TableCell className="text-center">{deal.probability}%</TableCell>
                   <TableCell className="text-sm">{deal.expectedCloseDate ? formatDate(deal.expectedCloseDate) : "—"}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => onEdit(deal)}><Pencil className="h-4 w-4" /></Button>
+                    {onEdit && <Button variant="ghost" size="icon" onClick={() => onEdit(deal)}><Pencil className="h-4 w-4" /></Button>}
                   </TableCell>
                 </TableRow>
               ))}

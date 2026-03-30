@@ -6,9 +6,14 @@ import { CompaniesTable } from "@/components/crm/companies-table";
 import { CompanyForm } from "@/components/crm/company-form";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useUser } from "@/lib/user-context";
 import type { CrmCompany } from "@/types/crm";
 
 export default function CompaniesPage() {
+  const { hasPermission } = useUser();
+  const canCreate = hasPermission("crm", "create");
+  const canEdit = hasPermission("crm", "edit");
+
   const [companies, setCompanies] = useState<CrmCompany[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CrmCompany | null>(null);
@@ -23,12 +28,14 @@ export default function CompaniesPage() {
   return (
     <div>
       <PageHeader title="Companies" description="Manage your CRM companies and organizations">
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />Add Company
-        </Button>
+        {canCreate && (
+          <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />Add Company
+          </Button>
+        )}
       </PageHeader>
-      <CompaniesTable companies={companies} onEdit={(c) => { setEditing(c); setFormOpen(true); }} />
-      <CompanyForm open={formOpen} onOpenChange={setFormOpen} company={editing} onSave={fetch_} />
+      <CompaniesTable companies={companies} onEdit={canEdit ? (c) => { setEditing(c); setFormOpen(true); } : undefined} />
+      {(canCreate || canEdit) && <CompanyForm open={formOpen} onOpenChange={setFormOpen} company={editing} onSave={fetch_} />}
     </div>
   );
 }

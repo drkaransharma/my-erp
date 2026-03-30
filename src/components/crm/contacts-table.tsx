@@ -12,7 +12,7 @@ import type { CrmContact } from "@/types/crm";
 
 interface ContactsTableProps {
   contacts: CrmContact[];
-  onEdit: (contact: CrmContact) => void;
+  onEdit?: (contact: CrmContact) => void;
 }
 
 export function ContactsTable({ contacts, onEdit }: ContactsTableProps) {
@@ -69,7 +69,7 @@ export function ContactsTable({ contacts, onEdit }: ContactsTableProps) {
                 </TableCell>
                 <TableCell className="text-sm">{contact.lastContactedAt ? formatDate(contact.lastContactedAt) : "—"}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(contact)}><Pencil className="h-4 w-4" /></Button>
+                  {onEdit && <Button variant="ghost" size="icon" onClick={() => onEdit(contact)}><Pencil className="h-4 w-4" /></Button>}
                 </TableCell>
               </TableRow>
             ))}

@@ -18,7 +18,7 @@ interface UsersTableProps {
   users: AdminUser[];
   roles: Role[];
   departments: Department[];
-  onEdit: (user: AdminUser) => void;
+  onEdit?: (user: AdminUser) => void;
 }
 
 export function UsersTable({ users, roles, departments, onEdit }: UsersTableProps) {
@@ -98,7 +98,7 @@ export function UsersTable({ users, roles, departments, onEdit }: UsersTableProp
                 <TableCell className="text-sm">{user.department?.name || "—"}</TableCell>
                 <TableCell><Badge variant={statusVariant[user.status]}>{user.status}</Badge></TableCell>
                 <TableCell className="text-sm">{user.lastLoginAt ? formatDate(user.lastLoginAt) : "Never"}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => onEdit(user)}><Pencil className="h-4 w-4" /></Button></TableCell>
+                <TableCell>{onEdit && <Button variant="ghost" size="icon" onClick={() => onEdit(user)}><Pencil className="h-4 w-4" /></Button>}</TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (

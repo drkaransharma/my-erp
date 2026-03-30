@@ -1,14 +1,26 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { UsersTable } from "@/components/admin/users-table";
 import { UserForm } from "@/components/admin/user-form";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useUser } from "@/lib/user-context";
 import type { AdminUser, Role, Department } from "@/types/admin";
 
 export default function UsersPage() {
+  const { hasPermission, loading: authLoading, currentUser } = useUser();
+  const router = useRouter();
+  const canView = hasPermission("admin", "view");
+  const canCreate = hasPermission("admin", "create");
+  const canEdit = hasPermission("admin", "edit");
+
+  useEffect(() => {
+    if (!authLoading && currentUser && !canView) router.push("/dashboard");
+  }, [authLoading, currentUser, canView, router]);
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -24,17 +36,17 @@ export default function UsersPage() {
     setDepartments(await deptsRes.json());
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (canView) fetchData(); }, [fetchData, canView]);
+
+  if (!canView) return null;
 
   return (
     <div>
       <PageHeader title="Users" description="Manage user accounts, roles, and department assignments">
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />Add User
-        </Button>
+        {canCreate && <Button onClick={() => { setEditing(null); setFormOpen(true); }}><Plus className="h-4 w-4 mr-2" />Add User</Button>}
       </PageHeader>
-      <UsersTable users={users} roles={roles} departments={departments} onEdit={(u) => { setEditing(u); setFormOpen(true); }} />
-      <UserForm open={formOpen} onOpenChange={setFormOpen} user={editing} roles={roles} departments={departments} users={users} onSave={fetchData} />
+      <UsersTable users={users} roles={roles} departments={departments} onEdit={canEdit ? (u) => { setEditing(u); setFormOpen(true); } : undefined} />
+      {(canCreate || canEdit) && <UserForm open={formOpen} onOpenChange={setFormOpen} user={editing} roles={roles} departments={departments} users={users} onSave={fetchData} />}
     </div>
   );
 }

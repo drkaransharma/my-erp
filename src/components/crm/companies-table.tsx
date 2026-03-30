@@ -10,7 +10,7 @@ import type { CrmCompany } from "@/types/crm";
 
 interface CompaniesTableProps {
   companies: CrmCompany[];
-  onEdit: (company: CrmCompany) => void;
+  onEdit?: (company: CrmCompany) => void;
 }
 
 export function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
@@ -55,9 +55,9 @@ export function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
                 <TableCell className="text-center">{company._count?.deals ?? 0}</TableCell>
                 <TableCell className="text-right font-mono">{formatCurrency(company._dealValue ?? 0)}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(company)}>
+                  {onEdit && <Button variant="ghost" size="icon" onClick={() => onEdit(company)}>
                     <Pencil className="h-4 w-4" />
-                  </Button>
+                  </Button>}
                 </TableCell>
               </TableRow>
             ))}
