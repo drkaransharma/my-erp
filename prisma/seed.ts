@@ -511,14 +511,14 @@ async function main() {
 
   const roles = await Promise.all([
     prisma.role.create({ data: { name: "Super Admin", description: "Full access to all modules", isSystem: true, permissions: { finance: allPerms, crm: allPerms, hr: allPerms, inventory: allPerms, admin: allPerms } } }),
-    prisma.role.create({ data: { name: "Finance Admin", description: "Full finance access, view others", isSystem: true, permissions: { finance: allPerms, crm: viewOnly, hr: viewOnly, inventory: viewOnly, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "Finance User", description: "View and create in finance", isSystem: true, permissions: { finance: viewCreate, crm: viewOnly, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "CRM Admin", description: "Full CRM access, view others", isSystem: true, permissions: { finance: viewOnly, crm: allPerms, hr: viewOnly, inventory: viewOnly, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "CRM User", description: "View and create in CRM", isSystem: true, permissions: { finance: noAccess, crm: viewCreate, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "HR Admin", description: "Full HR access, view others", isSystem: true, permissions: { finance: viewOnly, crm: viewOnly, hr: allPerms, inventory: viewOnly, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "HR User", description: "View and create in HR", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: viewCreate, inventory: noAccess, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "Inventory Admin", description: "Full inventory access, view others", isSystem: true, permissions: { finance: viewOnly, crm: viewOnly, hr: viewOnly, inventory: allPerms, admin: noAccess } } }),
-    prisma.role.create({ data: { name: "Inventory User", description: "View and create in inventory", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: noAccess, inventory: viewCreate, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "Finance Admin", description: "Full finance access only", isSystem: true, permissions: { finance: allPerms, crm: noAccess, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "Finance User", description: "View and create in finance only", isSystem: true, permissions: { finance: viewCreate, crm: noAccess, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "CRM Admin", description: "Full CRM access only", isSystem: true, permissions: { finance: noAccess, crm: allPerms, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "CRM User", description: "View and create in CRM only", isSystem: true, permissions: { finance: noAccess, crm: viewCreate, hr: noAccess, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "HR Admin", description: "Full HR access only", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: allPerms, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "HR User", description: "View and create in HR only", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: viewCreate, inventory: noAccess, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "Inventory Admin", description: "Full inventory access only", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: noAccess, inventory: allPerms, admin: noAccess } } }),
+    prisma.role.create({ data: { name: "Inventory User", description: "View and create in inventory only", isSystem: true, permissions: { finance: noAccess, crm: noAccess, hr: noAccess, inventory: viewCreate, admin: noAccess } } }),
     prisma.role.create({ data: { name: "Viewer", description: "Read-only access to all modules", isSystem: true, permissions: { finance: viewOnly, crm: viewOnly, hr: viewOnly, inventory: viewOnly, admin: noAccess } } }),
   ]);
 
