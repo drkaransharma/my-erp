@@ -1,9 +1,18 @@
-import { PrismaClient, AccountType, JournalEntryStatus, BillStatus, InvoiceStatus, ContactStatus, LeadSource, LeadStatus, DealStage, UserStatus } from "@prisma/client";
+import { PrismaClient, AccountType, JournalEntryStatus, BillStatus, InvoiceStatus, ContactStatus, LeadSource, LeadStatus, DealStage, UserStatus, EmployeeStatus, AttendanceStatus, LeaveType, LeaveStatus, PayrollStatus, ProductStatus, POStatus, MovementType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
   // Clear existing data
+  await prisma.stockMovement.deleteMany();
+  await prisma.purchaseOrderItem.deleteMany();
+  await prisma.purchaseOrder.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.warehouse.deleteMany();
+  await prisma.payrollRecord.deleteMany();
+  await prisma.leaveRequest.deleteMany();
+  await prisma.attendance.deleteMany();
+  await prisma.employee.deleteMany();
   await prisma.user.deleteMany();
   await prisma.department.deleteMany();
   await prisma.role.deleteMany();
@@ -579,6 +588,188 @@ async function main() {
   await prisma.department.update({ where: { id: departments[5].id }, data: { headId: cto.id } });
 
   console.log("Set department heads");
+
+  // ==================== HR: EMPLOYEES ====================
+  const employees = await Promise.all([
+    prisma.employee.create({ data: { employeeCode: "EMP-001", firstName: "Richard", lastName: "Sterling", email: "emp.sterling@myerp.com", phone: "+1-555-3001", position: "Chief Executive Officer", departmentId: departments[0].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2020-01-15"), salary: 250000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-002", firstName: "Catherine", lastName: "Wells", email: "emp.wells@myerp.com", phone: "+1-555-3002", position: "VP of Finance", departmentId: departments[1].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2020-03-01"), salary: 180000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-003", firstName: "Marcus", lastName: "Reed", email: "emp.reed@myerp.com", phone: "+1-555-3003", position: "VP of Sales", departmentId: departments[2].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2020-06-15"), salary: 175000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-004", firstName: "Diana", lastName: "Shaw", email: "emp.shaw@myerp.com", phone: "+1-555-3004", position: "VP of Human Resources", departmentId: departments[3].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2021-01-10"), salary: 165000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-005", firstName: "Frank", lastName: "Gomez", email: "emp.gomez@myerp.com", phone: "+1-555-3005", position: "VP of Operations", departmentId: departments[4].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2020-09-01"), salary: 170000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-006", firstName: "Elena", lastName: "Vasquez", email: "emp.vasquez@myerp.com", phone: "+1-555-3006", position: "CTO", departmentId: departments[5].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2020-02-01"), salary: 220000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-007", firstName: "Laura", lastName: "Chen", email: "emp.chen@myerp.com", phone: "+1-555-3007", position: "Senior Accountant", departmentId: departments[1].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2022-04-15"), salary: 95000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-008", firstName: "Brian", lastName: "Patel", email: "emp.patel@myerp.com", phone: "+1-555-3008", position: "Financial Analyst", departmentId: departments[1].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2023-01-20"), salary: 85000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-009", firstName: "Alex", lastName: "Rivera", email: "emp.rivera@myerp.com", phone: "+1-555-3009", position: "Sales Manager", departmentId: departments[2].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2022-07-01"), salary: 110000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-010", firstName: "Jordan", lastName: "Blake", email: "emp.blake@myerp.com", phone: "+1-555-3010", position: "Account Executive", departmentId: departments[2].id, status: EmployeeStatus.ON_LEAVE, joinDate: new Date("2023-03-15"), salary: 80000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-011", firstName: "Priya", lastName: "Kapoor", email: "emp.kapoor@myerp.com", phone: "+1-555-3011", position: "HR Manager", departmentId: departments[3].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2022-09-01"), salary: 95000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-012", firstName: "Nina", lastName: "West", email: "emp.west@myerp.com", phone: "+1-555-3012", position: "Warehouse Manager", departmentId: departments[4].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2021-11-15"), salary: 88000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-013", firstName: "Kevin", lastName: "Zhang", email: "emp.zhang@myerp.com", phone: "+1-555-3013", position: "Lead Developer", departmentId: departments[5].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2022-01-10"), salary: 130000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-014", firstName: "Jessica", lastName: "Morgan", email: "emp.morgan@myerp.com", phone: "+1-555-3014", position: "Accounts Clerk", departmentId: departments[1].id, status: EmployeeStatus.TERMINATED, joinDate: new Date("2023-06-01"), salary: 55000 } }),
+    prisma.employee.create({ data: { employeeCode: "EMP-015", firstName: "Derek", lastName: "Simmons", email: "emp.simmons@myerp.com", phone: "+1-555-3015", position: "Logistics Coordinator", departmentId: departments[4].id, status: EmployeeStatus.ACTIVE, joinDate: new Date("2023-08-15"), salary: 72000 } }),
+  ]);
+
+  // Set managers
+  for (const emp of employees.slice(1, 6)) {
+    await prisma.employee.update({ where: { id: emp.id }, data: { managerId: employees[0].id } });
+  }
+  await prisma.employee.update({ where: { id: employees[6].id }, data: { managerId: employees[1].id } });
+  await prisma.employee.update({ where: { id: employees[7].id }, data: { managerId: employees[1].id } });
+  await prisma.employee.update({ where: { id: employees[8].id }, data: { managerId: employees[2].id } });
+  await prisma.employee.update({ where: { id: employees[9].id }, data: { managerId: employees[2].id } });
+  await prisma.employee.update({ where: { id: employees[10].id }, data: { managerId: employees[3].id } });
+  await prisma.employee.update({ where: { id: employees[11].id }, data: { managerId: employees[4].id } });
+  await prisma.employee.update({ where: { id: employees[12].id }, data: { managerId: employees[5].id } });
+  await prisma.employee.update({ where: { id: employees[14].id }, data: { managerId: employees[4].id } });
+
+  console.log(`Created ${employees.length} employees`);
+
+  // ==================== HR: ATTENDANCE ====================
+  const activeEmps = employees.filter(e => e.status !== "TERMINATED");
+  for (const emp of activeEmps) {
+    for (let d = 16; d <= 29; d++) {
+      const date = new Date(`2026-03-${String(d).padStart(2, "0")}`);
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+      const isLate = Math.random() < 0.1;
+      const isAbsent = Math.random() < 0.05;
+      const checkIn = new Date(date); checkIn.setHours(isLate ? 9 + Math.floor(Math.random() * 2) : 8, Math.floor(Math.random() * 30), 0);
+      const checkOut = new Date(date); checkOut.setHours(17 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 30), 0);
+      const hours = isAbsent ? 0 : (checkOut.getTime() - checkIn.getTime()) / 3600000;
+      await prisma.attendance.create({
+        data: {
+          employeeId: emp.id, date,
+          checkIn: isAbsent ? null : checkIn,
+          checkOut: isAbsent ? null : checkOut,
+          hoursWorked: isAbsent ? 0 : Math.round(hours * 100) / 100,
+          status: isAbsent ? AttendanceStatus.ABSENT : isLate ? AttendanceStatus.LATE : AttendanceStatus.PRESENT,
+        },
+      });
+    }
+  }
+  console.log("Created attendance records");
+
+  // ==================== HR: LEAVE REQUESTS ====================
+  const leaveRequests = [
+    { empIdx: 9, type: LeaveType.ANNUAL, start: "2026-03-25", end: "2026-04-05", days: 8, reason: "Family vacation", status: LeaveStatus.APPROVED },
+    { empIdx: 6, type: LeaveType.SICK, start: "2026-03-20", end: "2026-03-21", days: 2, reason: "Flu", status: LeaveStatus.APPROVED },
+    { empIdx: 8, type: LeaveType.PERSONAL, start: "2026-04-10", end: "2026-04-11", days: 2, reason: "Personal appointment", status: LeaveStatus.PENDING },
+    { empIdx: 12, type: LeaveType.ANNUAL, start: "2026-04-15", end: "2026-04-22", days: 5, reason: "Travel plans", status: LeaveStatus.PENDING },
+    { empIdx: 10, type: LeaveType.SICK, start: "2026-03-10", end: "2026-03-11", days: 2, reason: "Medical checkup", status: LeaveStatus.APPROVED },
+    { empIdx: 7, type: LeaveType.ANNUAL, start: "2026-05-01", end: "2026-05-09", days: 7, reason: "Summer break", status: LeaveStatus.PENDING },
+    { empIdx: 11, type: LeaveType.UNPAID, start: "2026-04-20", end: "2026-04-21", days: 2, reason: "Personal matter", status: LeaveStatus.REJECTED },
+    { empIdx: 14, type: LeaveType.ANNUAL, start: "2026-04-01", end: "2026-04-04", days: 4, reason: "Conference attendance", status: LeaveStatus.APPROVED },
+  ];
+  for (const lr of leaveRequests) {
+    await prisma.leaveRequest.create({
+      data: { employeeId: employees[lr.empIdx].id, leaveType: lr.type, startDate: new Date(lr.start), endDate: new Date(lr.end), days: lr.days, reason: lr.reason, status: lr.status },
+    });
+  }
+  console.log(`Created ${leaveRequests.length} leave requests`);
+
+  // ==================== HR: PAYROLL ====================
+  for (const emp of activeEmps) {
+    for (const month of ["2026-02", "2026-03"]) {
+      const basic = Number(emp.salary) / 12;
+      const allowances = basic * 0.15;
+      const deductions = basic * 0.08;
+      const net = basic + allowances - deductions;
+      await prisma.payrollRecord.create({
+        data: { employeeId: emp.id, month, basicSalary: Math.round(basic), allowances: Math.round(allowances), deductions: Math.round(deductions), netPay: Math.round(net), status: month === "2026-02" ? PayrollStatus.PAID : PayrollStatus.PROCESSED },
+      });
+    }
+  }
+  console.log("Created payroll records");
+
+  // ==================== INVENTORY: WAREHOUSES ====================
+  const warehouses = await Promise.all([
+    prisma.warehouse.create({ data: { name: "Main Warehouse", location: "Chicago, IL", capacity: 5000, description: "Primary storage facility" } }),
+    prisma.warehouse.create({ data: { name: "East Coast Hub", location: "Newark, NJ", capacity: 3000, description: "East coast distribution center" } }),
+    prisma.warehouse.create({ data: { name: "West Coast Hub", location: "Los Angeles, CA", capacity: 3500, description: "West coast distribution center" } }),
+    prisma.warehouse.create({ data: { name: "Returns Center", location: "Dallas, TX", capacity: 1500, description: "Returns processing facility" } }),
+  ]);
+  console.log(`Created ${warehouses.length} warehouses`);
+
+  // ==================== INVENTORY: PRODUCTS ====================
+  const products = await Promise.all([
+    prisma.product.create({ data: { sku: "ELEC-001", name: "Business Laptop Pro", category: "Electronics", quantity: 45, unitPrice: 1299.99, reorderLevel: 20, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "ELEC-002", name: "Wireless Monitor 27\"", category: "Electronics", quantity: 30, unitPrice: 449.99, reorderLevel: 15, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "ELEC-003", name: "Docking Station USB-C", category: "Electronics", quantity: 8, unitPrice: 189.99, reorderLevel: 10, warehouseId: warehouses[0].id, status: ProductStatus.LOW_STOCK } }),
+    prisma.product.create({ data: { sku: "ELEC-004", name: "Wireless Keyboard & Mouse", category: "Electronics", quantity: 60, unitPrice: 79.99, reorderLevel: 25, warehouseId: warehouses[1].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "OFF-001", name: "A4 Paper (Box of 10 reams)", category: "Office Supplies", quantity: 120, unitPrice: 42.99, reorderLevel: 50, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "OFF-002", name: "Printer Ink Cartridge Set", category: "Office Supplies", quantity: 5, unitPrice: 64.99, reorderLevel: 15, warehouseId: warehouses[0].id, status: ProductStatus.LOW_STOCK } }),
+    prisma.product.create({ data: { sku: "OFF-003", name: "Ergonomic Office Chair", category: "Office Supplies", quantity: 18, unitPrice: 399.99, reorderLevel: 10, warehouseId: warehouses[1].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "OFF-004", name: "Standing Desk Frame", category: "Office Supplies", quantity: 0, unitPrice: 549.99, reorderLevel: 5, warehouseId: warehouses[1].id, status: ProductStatus.OUT_OF_STOCK } }),
+    prisma.product.create({ data: { sku: "RAW-001", name: "Steel Sheets (per ton)", category: "Raw Materials", quantity: 25, unitPrice: 850.00, reorderLevel: 10, warehouseId: warehouses[2].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "RAW-002", name: "Copper Wire (500m roll)", category: "Raw Materials", quantity: 12, unitPrice: 320.00, reorderLevel: 8, warehouseId: warehouses[2].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "RAW-003", name: "Aluminum Ingots (per kg)", category: "Raw Materials", quantity: 3, unitPrice: 45.00, reorderLevel: 20, warehouseId: warehouses[2].id, status: ProductStatus.LOW_STOCK } }),
+    prisma.product.create({ data: { sku: "RAW-004", name: "Industrial Adhesive (20L)", category: "Raw Materials", quantity: 40, unitPrice: 125.00, reorderLevel: 15, warehouseId: warehouses[2].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "PKG-001", name: "Cardboard Boxes (Large)", category: "Packaging", quantity: 500, unitPrice: 2.50, reorderLevel: 200, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "PKG-002", name: "Bubble Wrap (100m roll)", category: "Packaging", quantity: 35, unitPrice: 28.99, reorderLevel: 20, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "PKG-003", name: "Packing Tape (48 rolls)", category: "Packaging", quantity: 0, unitPrice: 36.99, reorderLevel: 10, warehouseId: warehouses[1].id, status: ProductStatus.OUT_OF_STOCK } }),
+    prisma.product.create({ data: { sku: "ELEC-005", name: "Server Rack 42U", category: "Electronics", quantity: 4, unitPrice: 2899.99, reorderLevel: 2, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "ELEC-006", name: "Network Switch 48-Port", category: "Electronics", quantity: 7, unitPrice: 1199.99, reorderLevel: 5, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "OFF-005", name: "Whiteboard 6ft x 4ft", category: "Office Supplies", quantity: 12, unitPrice: 189.99, reorderLevel: 5, warehouseId: warehouses[1].id, status: ProductStatus.IN_STOCK } }),
+    prisma.product.create({ data: { sku: "RAW-005", name: "PVC Pipes (bundle of 20)", category: "Raw Materials", quantity: 0, unitPrice: 210.00, reorderLevel: 10, warehouseId: warehouses[2].id, status: ProductStatus.OUT_OF_STOCK } }),
+    prisma.product.create({ data: { sku: "PKG-004", name: "Shipping Labels (1000 pcs)", category: "Packaging", quantity: 80, unitPrice: 18.99, reorderLevel: 30, warehouseId: warehouses[0].id, status: ProductStatus.IN_STOCK } }),
+  ]);
+  console.log(`Created ${products.length} products`);
+
+  // ==================== INVENTORY: PURCHASE ORDERS ====================
+  const pos = [
+    { poNum: "PO-2026-001", vendorIdx: 0, date: "2026-01-15", total: 4299, status: POStatus.RECEIVED, items: [{ prodIdx: 4, qty: 100, price: 42.99 }] },
+    { poNum: "PO-2026-002", vendorIdx: 1, date: "2026-02-01", total: 12999, status: POStatus.RECEIVED, items: [{ prodIdx: 0, qty: 10, price: 1299.99 }] },
+    { poNum: "PO-2026-003", vendorIdx: 1, date: "2026-02-20", total: 3799, status: POStatus.RECEIVED, items: [{ prodIdx: 2, qty: 20, price: 189.99 }] },
+    { poNum: "PO-2026-004", vendorIdx: 0, date: "2026-03-05", total: 649, status: POStatus.ORDERED, items: [{ prodIdx: 5, qty: 10, price: 64.99 }] },
+    { poNum: "PO-2026-005", vendorIdx: 1, date: "2026-03-10", total: 5499, status: POStatus.ORDERED, items: [{ prodIdx: 7, qty: 10, price: 549.99 }] },
+    { poNum: "PO-2026-006", vendorIdx: 2, date: "2026-03-15", total: 8500, status: POStatus.DRAFT, items: [{ prodIdx: 8, qty: 10, price: 850.00 }] },
+    { poNum: "PO-2026-007", vendorIdx: 0, date: "2026-03-20", total: 3699, status: POStatus.DRAFT, items: [{ prodIdx: 14, qty: 100, price: 36.99 }] },
+    { poNum: "PO-2026-008", vendorIdx: 1, date: "2026-02-10", total: 7999, status: POStatus.CANCELLED, items: [{ prodIdx: 6, qty: 20, price: 399.99 }] },
+  ];
+  for (const po of pos) {
+    await prisma.purchaseOrder.create({
+      data: {
+        poNumber: po.poNum, supplierId: vendors[po.vendorIdx].id, date: new Date(po.date), totalAmount: po.total, status: po.status,
+        items: { create: po.items.map(i => ({ productId: products[i.prodIdx].id, quantity: i.qty, unitPrice: i.price, totalPrice: i.qty * i.price })) },
+      },
+    });
+  }
+  console.log(`Created ${pos.length} purchase orders`);
+
+  // ==================== INVENTORY: STOCK MOVEMENTS ====================
+  const movements = [
+    { prodIdx: 0, whIdx: 0, type: MovementType.IN, qty: 50, ref: "PO-2026-002", date: "2026-02-05" },
+    { prodIdx: 0, whIdx: 0, type: MovementType.OUT, qty: 5, ref: "SHIP-001", date: "2026-02-20" },
+    { prodIdx: 4, whIdx: 0, type: MovementType.IN, qty: 100, ref: "PO-2026-001", date: "2026-01-20" },
+    { prodIdx: 2, whIdx: 0, type: MovementType.IN, qty: 20, ref: "PO-2026-003", date: "2026-02-25" },
+    { prodIdx: 2, whIdx: 0, type: MovementType.OUT, qty: 12, ref: "SHIP-005", date: "2026-03-10" },
+    { prodIdx: 1, whIdx: 0, type: MovementType.IN, qty: 40, ref: "PO-INIT", date: "2026-01-05" },
+    { prodIdx: 1, whIdx: 0, type: MovementType.OUT, qty: 10, ref: "SHIP-003", date: "2026-03-01" },
+    { prodIdx: 3, whIdx: 1, type: MovementType.IN, qty: 80, ref: "PO-INIT", date: "2026-01-05" },
+    { prodIdx: 3, whIdx: 1, type: MovementType.OUT, qty: 20, ref: "SHIP-004", date: "2026-02-15" },
+    { prodIdx: 8, whIdx: 2, type: MovementType.IN, qty: 30, ref: "PO-INIT", date: "2026-01-10" },
+    { prodIdx: 8, whIdx: 2, type: MovementType.OUT, qty: 5, ref: "PROD-001", date: "2026-03-05" },
+    { prodIdx: 12, whIdx: 0, type: MovementType.IN, qty: 600, ref: "PO-INIT", date: "2026-01-05" },
+    { prodIdx: 12, whIdx: 0, type: MovementType.OUT, qty: 100, ref: "SHIP-010", date: "2026-03-15" },
+    { prodIdx: 5, whIdx: 0, type: MovementType.IN, qty: 15, ref: "PO-INIT", date: "2026-01-05" },
+    { prodIdx: 5, whIdx: 0, type: MovementType.OUT, qty: 10, ref: "USE-002", date: "2026-03-01" },
+    { prodIdx: 9, whIdx: 2, type: MovementType.IN, qty: 20, ref: "PO-INIT", date: "2026-01-10" },
+    { prodIdx: 9, whIdx: 2, type: MovementType.OUT, qty: 8, ref: "PROD-003", date: "2026-02-28" },
+    { prodIdx: 6, whIdx: 1, type: MovementType.IN, qty: 25, ref: "PO-INIT", date: "2026-01-10" },
+    { prodIdx: 6, whIdx: 1, type: MovementType.OUT, qty: 7, ref: "SHIP-008", date: "2026-03-12" },
+    { prodIdx: 15, whIdx: 0, type: MovementType.IN, qty: 6, ref: "PO-INIT", date: "2026-01-15" },
+    { prodIdx: 15, whIdx: 0, type: MovementType.OUT, qty: 2, ref: "INSTALL-001", date: "2026-03-20" },
+    { prodIdx: 13, whIdx: 0, type: MovementType.IN, qty: 50, ref: "PO-INIT", date: "2026-01-05" },
+    { prodIdx: 13, whIdx: 0, type: MovementType.OUT, qty: 15, ref: "SHIP-012", date: "2026-03-10" },
+    { prodIdx: 10, whIdx: 2, type: MovementType.IN, qty: 15, ref: "PO-INIT", date: "2026-01-10" },
+    { prodIdx: 10, whIdx: 2, type: MovementType.OUT, qty: 12, ref: "PROD-005", date: "2026-03-18" },
+  ];
+  for (const m of movements) {
+    await prisma.stockMovement.create({
+      data: { productId: products[m.prodIdx].id, warehouseId: warehouses[m.whIdx].id, type: m.type, quantity: m.qty, reference: m.ref, date: new Date(m.date) },
+    });
+  }
+  console.log(`Created ${movements.length} stock movements`);
+
   console.log("Seed complete!");
 }
 

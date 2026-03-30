@@ -96,7 +96,8 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bills Bill[]
+  bills          Bill[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Customer {
@@ -284,8 +285,9 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  head  User?  @relation("DepartmentHead", fields: [headId], references: [id])
-  users User[] @relation("DepartmentMembers")
+  head      User?      @relation("DepartmentHead", fields: [headId], references: [id])
+  users     User[]     @relation("DepartmentMembers")
+  employees Employee[] @relation("EmployeeDepartment")
 }
 
 model Role {
@@ -326,4 +328,226 @@ model User {
   @@index([departmentId])
   @@index([reportsToId])
   @@index([status])
+}
+
+// ==================== HR MODULE ====================
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  LEAVE
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  PERSONAL
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayrollStatus {
+  DRAFT
+  PROCESSED
+  PAID
+}
+
+model Employee {
+  id           String         @id @default(uuid())
+  employeeCode String         @unique
+  firstName    String
+  lastName     String
+  email        String         @unique
+  phone        String?
+  position     String
+  departmentId String?
+  managerId    String?
+  status       EmployeeStatus @default(ACTIVE)
+  joinDate     DateTime
+  salary       Decimal        @db.Decimal(15, 2)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  department  Department?      @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+  manager     Employee?        @relation("EmployeeHierarchy", fields: [managerId], references: [id])
+  reports     Employee[]       @relation("EmployeeHierarchy")
+  attendance  Attendance[]
+  leaves      LeaveRequest[]   @relation("LeaveEmployee")
+  approvedLeaves LeaveRequest[] @relation("LeaveApprover")
+  payroll     PayrollRecord[]
+
+  @@index([departmentId])
+  @@index([status])
+}
+
+model Attendance {
+  id          String           @id @default(uuid())
+  employeeId  String
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hoursWorked Decimal?         @db.Decimal(5, 2)
+  status      AttendanceStatus @default(PRESENT)
+  createdAt   DateTime         @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId])
+  @@index([date])
+}
+
+model LeaveRequest {
+  id           String      @id @default(uuid())
+  employeeId   String
+  leaveType    LeaveType
+  startDate    DateTime
+  endDate      DateTime
+  days         Int
+  reason       String?
+  status       LeaveStatus @default(PENDING)
+  approvedById String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  employee   Employee  @relation("LeaveEmployee", fields: [employeeId], references: [id])
+  approvedBy Employee? @relation("LeaveApprover", fields: [approvedById], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model PayrollRecord {
+  id          String        @id @default(uuid())
+  employeeId  String
+  month       String
+  basicSalary Decimal       @db.Decimal(15, 2)
+  allowances  Decimal       @default(0) @db.Decimal(15, 2)
+  deductions  Decimal       @default(0) @db.Decimal(15, 2)
+  netPay      Decimal       @db.Decimal(15, 2)
+  status      PayrollStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId])
+  @@index([month])
+}
+
+// ==================== INVENTORY MODULE ====================
+
+enum ProductStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+enum POStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  location    String?
+  capacity    Int      @default(1000)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products       Product[]
+  stockMovements StockMovement[]
+}
+
+model Product {
+  id           String        @id @default(uuid())
+  sku          String        @unique
+  name         String
+  category     String
+  description  String?
+  quantity     Int           @default(0)
+  unitPrice    Decimal       @db.Decimal(15, 2)
+  reorderLevel Int           @default(10)
+  warehouseId  String?
+  status       ProductStatus @default(IN_STOCK)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
+  orderItems     PurchaseOrderItem[]
+  stockMovements StockMovement[]
+
+  @@index([category])
+  @@index([status])
+  @@index([warehouseId])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  poNumber    String   @unique
+  supplierId  String
+  date        DateTime
+  totalAmount Decimal  @db.Decimal(15, 2)
+  status      POStatus @default(DRAFT)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  supplier Vendor             @relation(fields: [supplierId], references: [id])
+  items    PurchaseOrderItem[]
+
+  @@index([supplierId])
+  @@index([status])
+}
+
+model PurchaseOrderItem {
+  id              String  @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  unitPrice       Decimal @db.Decimal(15, 2)
+  totalPrice      Decimal @db.Decimal(15, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id])
+
+  @@index([purchaseOrderId])
+}
+
+model StockMovement {
+  id          String       @id @default(uuid())
+  productId   String
+  warehouseId String?
+  type        MovementType
+  quantity    Int
+  reference   String?
+  date        DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+
+  product   Product    @relation(fields: [productId], references: [id])
+  warehouse Warehouse? @relation(fields: [warehouseId], references: [id])
+
+  @@index([productId])
+  @@index([date])
 }

@@ -85,19 +85,27 @@ const navGroups: NavGroup[] = [
   {
     title: "HR",
     icon: UserCircle,
-    disabled: true,
     module: "hr",
+    defaultOpen: false,
     items: [
-      { title: "Employees", href: "#", icon: UserCircle, disabled: true, badge: "Soon" },
+      { title: "Dashboard", href: "/hr/dashboard", icon: BarChart3 },
+      { title: "Employees", href: "/hr/employees", icon: Users },
+      { title: "Attendance", href: "/hr/attendance", icon: LayoutDashboard },
+      { title: "Leave Mgmt", href: "/hr/leaves", icon: FileText },
+      { title: "Payroll", href: "/hr/payroll", icon: CreditCard },
     ],
   },
   {
     title: "Inventory",
     icon: Package,
-    disabled: true,
     module: "inventory",
+    defaultOpen: false,
     items: [
-      { title: "Products", href: "#", icon: Package, disabled: true, badge: "Soon" },
+      { title: "Dashboard", href: "/inventory/dashboard", icon: BarChart3 },
+      { title: "Products", href: "/inventory/products", icon: Package },
+      { title: "Warehouses", href: "/inventory/warehouses", icon: Building2 },
+      { title: "Purchase Orders", href: "/inventory/purchase-orders", icon: Receipt },
+      { title: "Stock Movements", href: "/inventory/movements", icon: FileText },
     ],
   },
   {

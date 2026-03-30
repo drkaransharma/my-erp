@@ -36,6 +36,18 @@ const breadcrumbMap: Record<string, string> = {
   "/admin/roles": "Roles & Permissions",
   "/admin/departments": "Departments",
   "/admin/org-chart": "Org Chart",
+  "/hr": "HR",
+  "/hr/dashboard": "Dashboard",
+  "/hr/employees": "Employees",
+  "/hr/attendance": "Attendance",
+  "/hr/leaves": "Leave Management",
+  "/hr/payroll": "Payroll",
+  "/inventory": "Inventory",
+  "/inventory/dashboard": "Dashboard",
+  "/inventory/products": "Products",
+  "/inventory/warehouses": "Warehouses",
+  "/inventory/purchase-orders": "Purchase Orders",
+  "/inventory/movements": "Stock Movements",
   "/settings": "Settings",
 };
 
