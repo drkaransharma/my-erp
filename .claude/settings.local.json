@@ -6,7 +6,13 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(npm run:*)",
       "Bash(npx next:*)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs wc:*)",
+      "Bash(curl -s http://localhost:3002)",
+      "Bash(node -e \":*)",
+      "Read(//c/Users/drkar/idea-insight/**)",
+      "Bash(npm install:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

@@ -6,6 +6,18 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "empowersign",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\drkar\\empowersign && npx next dev --port 3000"],
+      "port": 3000
+    },
+    {
+      "name": "ainovate",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\drkar\\idea-insight && npx next dev --port 3001"],
+      "port": 3001
     }
   ]
 }
